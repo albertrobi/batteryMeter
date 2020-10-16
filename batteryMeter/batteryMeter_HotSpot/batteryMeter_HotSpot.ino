@@ -1,8 +1,10 @@
-
+// Import required libraries
+#include <Arduino.h>
 #include <ESP8266WiFi.h>
+#include <Hash.h>
 #include <WiFiClientSecure.h>
 #include <ESP8266WebServer.h>
-#include <ESP8266mDNS.h>
+#include <Adafruit_Sensor.h>
 #include <Servo.h>
 #include "index.h" //Our HTML webpage contents with javascripts
 
@@ -12,23 +14,13 @@ Servo myservo;  // create servo object to control a servo
 // GPIO the servo is attached to
 static const int servoPin = D2;
 
-// Replace with your network credentials
-const char* ssid = "BalazsEsAlbert";
-const char* password = "emeseesrobi87";
+const char* ssid     = "Battery Meter";
+const char* password = "123456789";
 
-// config static IP
-IPAddress ip(192, 168, 0, 188); // where 155 is the desired IP Address
-IPAddress gateway(192, 168, 0, 1); // set gateway
-IPAddress subnet(255, 255, 255, 0); // set subnet mask
-
-// Set web server port number to 80
 ESP8266WebServer server(80); //Server on port 80
 
-//===============================================================
-// This routine is executed when you open its IP in browser
-//===============================================================
 void handleRoot() {
-  String s = MAIN_page; //Read HTML contents
+  String s = index_html; //Read HTML contents
   server.send(200, "text/html", s); //Send web page
   Serial.println("Loaded main index.h ");
 }
@@ -52,25 +44,22 @@ void moveServo() {
    server.send(200, "text/json", json);
 }
 
-void setup() {
+void setup(){
+  // Serial port for debugging purposes
   Serial.begin(115200);
 
   myservo.attach(servoPin);  // attaches the servo on the servoPin to the servo object
+  
+  Serial.println("Setting AP (Access Point)…");
+  // Remove the password parameter, if you want the AP (Access Point) to be open
+  WiFi.softAP(ssid, password);
 
-  // Connect to Wi-Fi network with SSID and password
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
-  WiFi.config(ip, gateway, subnet);
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  // Print local IP address and start web server
-  Serial.println("");
-  Serial.println("WiFi connected.");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
+  IPAddress IP = WiFi.softAPIP();
+  Serial.println("AP IP address: ");
+  Serial.println(IP);
+
+  // Print ESP8266 Local IP Address
+  //Serial.println(WiFi.localIP());
 
   server.on("/", handleRoot);      //Which routine to handle at root location. This is display page
   server.onNotFound(handleNotFound);
